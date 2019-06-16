@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 import numpy as np
 
-from train import DEVICE
+import cfg
 
 class Set2Set(nn.Module):
     def __init__(self, input_dim, hidden_dim, act_fn=nn.ReLU, num_layers=1):
@@ -41,10 +41,10 @@ class Set2Set(nn.Module):
         batch_size = embedding.size()[0]
         n = embedding.size()[1]
 
-        hidden = (torch.zeros(self.num_layers, batch_size, self.lstm_output_dim).to(DEVICE),
-                  torch.zeros(self.num_layers, batch_size, self.lstm_output_dim).to(DEVICE))
+        hidden = (torch.zeros(self.num_layers, batch_size, self.lstm_output_dim).to(cfg.DEVICE),
+                  torch.zeros(self.num_layers, batch_size, self.lstm_output_dim).to(cfg.DEVICE))
 
-        q_star = torch.zeros(batch_size, 1, self.hidden_dim).to(DEVICE)
+        q_star = torch.zeros(batch_size, 1, self.hidden_dim).to(cfg.DEVICE)
         for i in range(n):
             # q: batch_size x 1 x input_dim
             q, hidden = self.lstm(q_star, hidden)

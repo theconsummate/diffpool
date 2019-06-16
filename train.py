@@ -27,7 +27,7 @@ from graph_sampler import GraphSampler
 import load_data
 import util
 
-DEVICE = ''
+import cfg
 
 def evaluate(dataset, model, args, name='Validation', max_num_examples=None):
     model.eval()
@@ -35,11 +35,11 @@ def evaluate(dataset, model, args, name='Validation', max_num_examples=None):
     labels = []
     preds = []
     for batch_idx, data in enumerate(dataset):
-        adj = Variable(data['adj'].float(), requires_grad=False).to(DEVICE)
-        h0 = Variable(data['feats'].float()).to(DEVICE)
+        adj = Variable(data['adj'].float(), requires_grad=False).to(cfg.DEVICE)
+        h0 = Variable(data['feats'].float()).to(cfg.DEVICE)
         labels.append(data['label'].long().numpy())
         batch_num_nodes = data['num_nodes'].int().numpy()
-        assign_input = Variable(data['assign_feats'].float(), requires_grad=False).to(DEVICE)
+        assign_input = Variable(data['assign_feats'].float(), requires_grad=False).to(cfg.DEVICE)
 
         ypred = model(h0, adj, batch_num_nodes, assign_x=assign_input)
         _, indices = torch.max(ypred, 1)
@@ -200,11 +200,11 @@ def train(dataset, model, args, same_feat=True, val_dataset=None, test_dataset=N
         for batch_idx, data in enumerate(dataset):
             begin_time = time.time()
             model.zero_grad()
-            adj = Variable(data['adj'].float(), requires_grad=False).to(DEVICE)
-            h0 = Variable(data['feats'].float(), requires_grad=False).to(DEVICE)
-            label = Variable(data['label'].long()).to(DEVICE)
+            adj = Variable(data['adj'].float(), requires_grad=False).to(cfg.DEVICE)
+            h0 = Variable(data['feats'].float(), requires_grad=False).to(cfg.DEVICE)
+            label = Variable(data['label'].long()).to(cfg.DEVICE)
             batch_num_nodes = data['num_nodes'].int().numpy() if mask_nodes else None
-            assign_input = Variable(data['assign_feats'].float(), requires_grad=False).to(DEVICE)
+            assign_input = Variable(data['assign_feats'].float(), requires_grad=False).to(cfg.DEVICE)
 
             ypred = model(h0, adj, batch_num_nodes, assign_x=assign_input)
             if not args.method == 'soft-assign' or not args.linkpred:
@@ -354,15 +354,15 @@ def syn_community1v2(args, writer=None, export_graphs=False):
                 max_num_nodes,
                 input_dim, args.hidden_dim, args.output_dim, args.num_classes, args.num_gc_layers,
                 args.hidden_dim, assign_ratio=args.assign_ratio, num_pooling=args.num_pool,
-                bn=args.bn, linkpred=args.linkpred, assign_input_dim=assign_input_dim).to(DEVICE)
+                bn=args.bn, linkpred=args.linkpred, assign_input_dim=assign_input_dim).to(cfg.DEVICE)
     elif args.method == 'base-set2set':
         print('Method: base-set2set')
         model = encoders.GcnSet2SetEncoder(input_dim, args.hidden_dim, args.output_dim, 2,
-                args.num_gc_layers, bn=args.bn).to(DEVICE)
+                args.num_gc_layers, bn=args.bn).to(cfg.DEVICE)
     else:
         print('Method: base')
         model = encoders.GcnEncoderGraph(input_dim, args.hidden_dim, args.output_dim, 2,
-                args.num_gc_layers, bn=args.bn).to(DEVICE)
+                args.num_gc_layers, bn=args.bn).to(cfg.DEVICE)
 
     train(train_dataset, model, args, val_dataset=val_dataset, test_dataset=test_dataset,
             writer=writer)
@@ -392,15 +392,15 @@ def syn_community2hier(args, writer=None):
                 max_num_nodes,
                 input_dim, args.hidden_dim, args.output_dim, args.num_classes, args.num_gc_layers,
                 args.hidden_dim, assign_ratio=args.assign_ratio, num_pooling=args.num_pool,
-                bn=args.bn, linkpred=args.linkpred, args=args, assign_input_dim=assign_input_dim).to(DEVICE)
+                bn=args.bn, linkpred=args.linkpred, args=args, assign_input_dim=assign_input_dim).to(cfg.DEVICE)
     elif args.method == 'base-set2set':
         print('Method: base-set2set')
         model = encoders.GcnSet2SetEncoder(input_dim, args.hidden_dim, args.output_dim, 2,
-                args.num_gc_layers, bn=args.bn, args=args, assign_input_dim=assign_input_dim).to(DEVICE)
+                args.num_gc_layers, bn=args.bn, args=args, assign_input_dim=assign_input_dim).to(cfg.DEVICE)
     else:
         print('Method: base')
         model = encoders.GcnEncoderGraph(input_dim, args.hidden_dim, args.output_dim, 2,
-                args.num_gc_layers, bn=args.bn, args=args).to(DEVICE)
+                args.num_gc_layers, bn=args.bn, args=args).to(cfg.DEVICE)
     train(train_dataset, model, args, val_dataset=val_dataset, test_dataset=test_dataset,
             writer=writer)
 
@@ -428,7 +428,7 @@ def pkl_task(args, feat=None):
     train_dataset, test_dataset, max_num_nodes = prepare_data(graphs, args, test_graphs=test_graphs)
     model = encoders.GcnEncoderGraph(
             args.input_dim, args.hidden_dim, args.output_dim, args.num_classes,
-            args.num_gc_layers, bn=args.bn).to(DEVICE)
+            args.num_gc_layers, bn=args.bn).to(cfg.DEVICE)
     train(train_dataset, model, args, test_dataset=test_dataset)
     evaluate(test_dataset, model, args, 'Validation')
 
@@ -458,17 +458,17 @@ def benchmark_task(args, writer=None, feat='node-label'):
                 input_dim, args.hidden_dim, args.output_dim, args.num_classes, args.num_gc_layers,
                 args.hidden_dim, assign_ratio=args.assign_ratio, num_pooling=args.num_pool,
                 bn=args.bn, dropout=args.dropout, linkpred=args.linkpred, args=args,
-                assign_input_dim=assign_input_dim).to(DEVICE)
+                assign_input_dim=assign_input_dim).to(cfg.DEVICE)
     elif args.method == 'base-set2set':
         print('Method: base-set2set')
         model = encoders.GcnSet2SetEncoder(
                 input_dim, args.hidden_dim, args.output_dim, args.num_classes,
-                args.num_gc_layers, bn=args.bn, dropout=args.dropout, args=args).to(DEVICE)
+                args.num_gc_layers, bn=args.bn, dropout=args.dropout, args=args).to(cfg.DEVICE)
     else:
         print('Method: base')
         model = encoders.GcnEncoderGraph(
                 input_dim, args.hidden_dim, args.output_dim, args.num_classes,
-                args.num_gc_layers, bn=args.bn, dropout=args.dropout, args=args).to(DEVICE)
+                args.num_gc_layers, bn=args.bn, dropout=args.dropout, args=args).to(cfg.DEVICE)
 
     train(train_dataset, model, args, val_dataset=val_dataset, test_dataset=test_dataset,
             writer=writer)
@@ -503,17 +503,17 @@ def benchmark_task_val(args, writer=None, feat='node-label'):
                     input_dim, args.hidden_dim, args.output_dim, args.num_classes, args.num_gc_layers,
                     args.hidden_dim, assign_ratio=args.assign_ratio, num_pooling=args.num_pool,
                     bn=args.bn, dropout=args.dropout, linkpred=args.linkpred, args=args,
-                    assign_input_dim=assign_input_dim).to(DEVICE)
+                    assign_input_dim=assign_input_dim).to(cfg.DEVICE)
         elif args.method == 'base-set2set':
             print('Method: base-set2set')
             model = encoders.GcnSet2SetEncoder(
                     input_dim, args.hidden_dim, args.output_dim, args.num_classes,
-                    args.num_gc_layers, bn=args.bn, dropout=args.dropout, args=args).to(DEVICE)
+                    args.num_gc_layers, bn=args.bn, dropout=args.dropout, args=args).to(cfg.DEVICE)
         else:
             print('Method: base')
             model = encoders.GcnEncoderGraph(
                     input_dim, args.hidden_dim, args.output_dim, args.num_classes,
-                    args.num_gc_layers, bn=args.bn, dropout=args.dropout, args=args).to(DEVICE)
+                    args.num_gc_layers, bn=args.bn, dropout=args.dropout, args=args).to(cfg.DEVICE)
 
         _, val_accs = train(train_dataset, model, args, val_dataset=val_dataset, test_dataset=None,
             writer=writer)
@@ -622,7 +622,6 @@ def arg_parse():
     return parser.parse_args()
 
 def main():
-    global DEVICE
     prog_args = arg_parse()
 
     # export scalar data to JSON for external processing
@@ -636,11 +635,11 @@ def main():
     # os.environ['CUDA_VISIBLE_DEVICES'] = prog_args.cuda
     print('CUDA', prog_args.cuda)
     if prog_args.cuda:
-        DEVICE = 'cuda'
+        cfg.DEVICE = 'cuda'
     else:
-        DEVICE = 'cpu'
+        cfg.DEVICE = 'cpu'
 
-    print('Device', DEVICE)
+    print('Device', cfg.DEVICE)
 
     if prog_args.bmname is not None:
         benchmark_task_val(prog_args, writer=writer)
