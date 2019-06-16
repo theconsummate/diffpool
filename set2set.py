@@ -5,13 +5,15 @@ import torch.nn.functional as F
 
 import numpy as np
 
+from train import DEVICE
+
 class Set2Set(nn.Module):
     def __init__(self, input_dim, hidden_dim, act_fn=nn.ReLU, num_layers=1):
         '''
         Args:
-            input_dim: input dim of Set2Set. 
-            hidden_dim: the dim of set representation, which is also the INPUT dimension of 
-                the LSTM in Set2Set. 
+            input_dim: input dim of Set2Set.
+            hidden_dim: the dim of set representation, which is also the INPUT dimension of
+                the LSTM in Set2Set.
                 This is a concatenation of weighted sum of embedding (dim input_dim), and the LSTM
                 hidden/output (dim: self.lstm_output_dim).
         '''
@@ -39,10 +41,10 @@ class Set2Set(nn.Module):
         batch_size = embedding.size()[0]
         n = embedding.size()[1]
 
-        hidden = (torch.zeros(self.num_layers, batch_size, self.lstm_output_dim).cuda(),
-                  torch.zeros(self.num_layers, batch_size, self.lstm_output_dim).cuda())
+        hidden = (torch.zeros(self.num_layers, batch_size, self.lstm_output_dim).to(DEVICE),
+                  torch.zeros(self.num_layers, batch_size, self.lstm_output_dim).to(DEVICE))
 
-        q_star = torch.zeros(batch_size, 1, self.hidden_dim).cuda()
+        q_star = torch.zeros(batch_size, 1, self.hidden_dim).to(DEVICE)
         for i in range(n):
             # q: batch_size x 1 x input_dim
             q, hidden = self.lstm(q_star, hidden)
