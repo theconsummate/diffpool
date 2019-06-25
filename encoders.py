@@ -9,6 +9,8 @@ from set2set import Set2Set
 
 import cfg
 
+from chamfer_loss import ChamferLoss
+
 # GCN basic operation
 class GraphConv(nn.Module):
     def __init__(self, input_dim, output_dim, add_self=False, normalize_embedding=False,
@@ -387,6 +389,8 @@ class SoftPoolingGcnEncoder(GcnEncoderGraph):
             #print('adj1', torch.sum(pred_adj0) / torch.numel(pred_adj0))
             #print('adj2', torch.sum(pred_adj) / torch.numel(pred_adj))
             #self.link_loss = F.nll_loss(torch.log(pred_adj), adj)
+            chamferLoss = ChamferLoss()(pred_adj, adj)
+            print('Chamfer Loss: ', chamferLoss)
             self.link_loss = -adj * torch.log(pred_adj+eps) - (1-adj) * torch.log(1-pred_adj+eps)
             if batch_num_nodes is None:
                 num_entries = max_num_nodes * max_num_nodes * adj.size()[0]
