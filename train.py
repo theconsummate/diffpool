@@ -195,6 +195,8 @@ def train(dataset, model, args, same_feat=True, val_dataset=None, test_dataset=N
     for epoch in range(args.num_epochs):
         total_time = 0
         avg_loss = 0.0
+        avg_main = 0.0
+        avg_link = 0.0
         model.train()
         print('Epoch: ', epoch)
         for batch_idx, data in enumerate(dataset):
@@ -211,6 +213,10 @@ def train(dataset, model, args, same_feat=True, val_dataset=None, test_dataset=N
                 loss = model.loss(ypred, label)
             else:
                 loss = model.loss(ypred, label, adj, batch_num_nodes)
+                linkloss = float(model.link_loss)
+                mainloss = float(loss) - linkloss
+                avg_main += mainloss
+                avg_link += linkloss
             loss.backward()
             nn.utils.clip_grad_norm(model.parameters(), args.clip)
             optimizer.step()
@@ -227,11 +233,13 @@ def train(dataset, model, args, same_feat=True, val_dataset=None, test_dataset=N
                 if args.log_graph:
                     log_graph(adj, batch_num_nodes, writer, epoch, writer_batch_idx, model.assign_tensor)
         avg_loss /= batch_idx + 1
+        avg_main /= batch_idx + 1
+        avg_link /= batch_idx + 1
         if writer is not None:
             writer.add_scalar('loss/avg_loss', avg_loss, epoch)
             if args.linkpred:
                 writer.add_scalar('loss/linkpred_loss', model.link_loss, epoch)
-        print('Avg loss: ', avg_loss, '; epoch time: ', total_time)
+        print('Avg loss: ', avg_loss, 'Main loss: ', avg_main, 'Link loss', avg_link, '; epoch time: ', total_time)
         result = evaluate(dataset, model, args, name='Train', max_num_examples=100)
         train_accs.append(result['acc'])
         train_epochs.append(epoch)

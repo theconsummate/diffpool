@@ -383,6 +383,7 @@ class SoftPoolingGcnEncoder(GcnEncoderGraph):
                 tmp = tmp @ pred_adj0
                 pred_adj = pred_adj + tmp
             pred_adj = torch.min(pred_adj, torch.Tensor(1).to(cfg.DEVICE))
+            pred_adj = torch.max(pred_adj, torch.zeros(pred_adj.size()).to(cfg.DEVICE))
             #print('adj1', torch.sum(pred_adj0) / torch.numel(pred_adj0))
             #print('adj2', torch.sum(pred_adj) / torch.numel(pred_adj))
             #self.link_loss = F.nll_loss(torch.log(pred_adj), adj)
@@ -397,7 +398,8 @@ class SoftPoolingGcnEncoder(GcnEncoderGraph):
                 self.link_loss[1-adj_mask.byte()] = 0.0
 
             self.link_loss = torch.sum(self.link_loss) / float(num_entries)
-            #print('linkloss: ', self.link_loss)
+            print('linkloss: ', self.link_loss)
+            print('loss: ', loss)
             return loss + self.link_loss
         return loss
 
