@@ -3,6 +3,7 @@ import numpy as np
 import scipy as sc
 import os
 import re
+import pickle
 
 def read_graphfile(datadir, dataname, max_nodes=None):
     ''' Read data from https://ls11-www.cs.tu-dortmund.de/staff/morris/graphkerneldatasets
@@ -116,6 +117,29 @@ def read_graphfile(datadir, dataname, max_nodes=None):
         graphs.append(nx.relabel_nodes(G, mapping))
     return graphs
 
+
+def create_graph_from_points(points, index):
+    xs = iter(points[index,:,0,0])
+    ys = iter(points[index,:,0,1])
+    zs = iter(points[index,:,0,2])
+    G = nx.grid_graph(dim=[xs, ys, zs])
+    G.graph['label'] = 1
+
+    # relabeling
+    mapping={}
+    it=0
+    if float(nx.__version__)<2.0:
+        for n in G.nodes():
+            mapping[n]=it
+            it+=1
+    else:
+        for n in G.nodes:
+            mapping[n]=it
+            it+=1
+
+    # indexed from 0
+    return nx.relabel_nodes(G, mapping)
+
 def read_mesh_file(datadir, dataname):
     '''
     Reads the train and validation file at data/mesh/Xtrn.npz
@@ -127,25 +151,43 @@ def read_mesh_file(datadir, dataname):
     train_points  = train_np_file[train_np_file.files[0]]
     graphs = []
     for i in range(train_points.shape[0])[:50]:
-        xs = iter(train_points[i,:10,0,0])
-        ys = iter(train_points[i,:10,0,0])
-        zs = iter(train_points[i,:10,0,0])
-        G = nx.grid_graph(dim=[xs, ys, zs])
-        G.graph['label'] = 1
-
-        # relabeling
-        mapping={}
-        it=0
-        if float(nx.__version__)<2.0:
-            for n in G.nodes():
-                mapping[n]=it
-                it+=1
-        else:
-            for n in G.nodes:
-                mapping[n]=it
-                it+=1
-
-        # indexed from 0
-        graphs.append(nx.relabel_nodes(G, mapping))
+        graphs.append(create_graph_from_points(train_points, i))
     return graphs
 
+
+def create_mesh_pickle(datadir, dataname):
+    '''
+    Reads the train and validation file at data/mesh/Xtrn.npz
+    Saves the graph object for each datapoint in a pickle
+    '''
+    local_dir_path = os.path.join(datadir, dataname)
+    pickle_dir = os.path.join(local_dir_path, "pickles", "train")
+    os.system('mkdir -p ' + pickle_dir)
+    train_file = os.path.join(local_dir_path, 'Xtrn.npz')
+    train_np_file = np.load(train_file)
+    train_points  = train_np_file[train_np_file.files[0]]
+    graphs = []
+    for i in range(train_points.shape[0]):
+        pickle_file = open(os.path.join(pickle_dir, "train" + str(i)+"_graph.pkl"), 'wb')
+        pickle.dump(create_graph_from_points(train_points, i), pickle_file, -1)
+        pickle_file.close()
+    # return graphs
+
+
+def read_mesh_graph_pickle(datadir, dataname):
+    local_dir_path = os.path.join(datadir, dataname)
+    pickle_dir = os.path.join(local_dir_path, "pickles", "train")
+    num_graphs = len(os.listdir(pickle_dir))
+    graphs = []
+    for i in range(num_graphs):
+        fname = os.path.join(pickle_dir, "train" + str(i)+"_graph.pkl")
+        f = open(fname, 'rb')
+        graphs.append(pickle.load(f))
+        f.close()
+    return graphs
+
+
+if __name__ == "__main__":
+    create_mesh_pickle("data", "mesh")
+    graphs = read_mesh_graph_pickle("data", "mesh")
+    print(graphs)
