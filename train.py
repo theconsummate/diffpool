@@ -533,6 +533,50 @@ def benchmark_task_val(args, writer=None, feat='node-label'):
     print(np.argmax(all_vals))
 
 
+
+def mesk_task(args, writer=None, feat=''):
+    graphs = load_data.read_mesh_file(args.datadir, args.bmname)
+
+    if feat == 'node-feat' and 'feat_dim' in graphs[0].graph:
+        print('Using node features')
+        input_dim = graphs[0].graph['feat_dim']
+    elif feat == 'node-label' and 'label' in graphs[0].node[0]:
+        print('Using node labels')
+        for G in graphs:
+            for u in G.nodes():
+                G.node[u]['feat'] = np.array(G.node[u]['label'])
+    else:
+        print('Using constant labels')
+        featgen_const = featgen.ConstFeatureGen(np.ones(args.input_dim, dtype=float))
+        for G in graphs:
+            featgen_const.gen_node_features(G)
+
+    train_dataset, val_dataset, test_dataset, max_num_nodes, input_dim, assign_input_dim = \
+            prepare_data(graphs, args)
+    if args.method == 'soft-assign':
+        print('Method: soft-assign')
+        model = encoders.SoftPoolingGcnEncoder(
+                max_num_nodes,
+                input_dim, args.hidden_dim, args.output_dim, args.num_classes, args.num_gc_layers,
+                args.hidden_dim, assign_ratio=args.assign_ratio, num_pooling=args.num_pool,
+                bn=args.bn, dropout=args.dropout, linkpred=args.linkpred, args=args,
+                assign_input_dim=assign_input_dim).to(cfg.DEVICE)
+    elif args.method == 'base-set2set':
+        print('Method: base-set2set')
+        model = encoders.GcnSet2SetEncoder(
+                input_dim, args.hidden_dim, args.output_dim, args.num_classes,
+                args.num_gc_layers, bn=args.bn, dropout=args.dropout, args=args).to(cfg.DEVICE)
+    else:
+        print('Method: base')
+        model = encoders.GcnEncoderGraph(
+                input_dim, args.hidden_dim, args.output_dim, args.num_classes,
+                args.num_gc_layers, bn=args.bn, dropout=args.dropout, args=args).to(cfg.DEVICE)
+
+    train(train_dataset, model, args, val_dataset=val_dataset, test_dataset=test_dataset,
+            writer=writer)
+    evaluate(test_dataset, model, args, 'Validation')
+
+
 def arg_parse():
     parser = argparse.ArgumentParser(description='GraphPool arguments.')
     io_parser = parser.add_mutually_exclusive_group(required=False)
@@ -650,7 +694,8 @@ def main():
     print('Device', cfg.DEVICE)
 
     if prog_args.bmname is not None:
-        benchmark_task_val(prog_args, writer=writer)
+        # benchmark_task_val(prog_args, writer=writer)
+        mesk_task(prog_args, writer=writer)
     elif prog_args.pkl_fname is not None:
         pkl_task(prog_args)
     elif prog_args.dataset is not None:

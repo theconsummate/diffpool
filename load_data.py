@@ -32,7 +32,7 @@ def read_graphfile(datadir, dataname, max_nodes=None):
         num_unique_node_labels = max(node_labels) + 1
     except IOError:
         print('No node labels')
- 
+
     filename_node_attrs=prefix + '_node_attributes.txt'
     node_attrs=[]
     try:
@@ -43,12 +43,12 @@ def read_graphfile(datadir, dataname, max_nodes=None):
                 node_attrs.append(np.array(attrs))
     except IOError:
         print('No node attributes')
-       
+
     label_has_zero = False
     filename_graphs=prefix + '_graph_labels.txt'
     graph_labels=[]
 
-    # assume that all graph labels appear in the dataset 
+    # assume that all graph labels appear in the dataset
     #(set of labels don't have to be consecutive)
     label_vals = []
     with open(filename_graphs) as f:
@@ -65,9 +65,9 @@ def read_graphfile(datadir, dataname, max_nodes=None):
     graph_labels = np.array([label_map_to_int[l] for l in graph_labels])
     #if label_has_zero:
     #    graph_labels += 1
-    
+
     filename_adj=prefix + '_A.txt'
-    adj_list={i:[] for i in range(1,len(graph_labels)+1)}    
+    adj_list={i:[] for i in range(1,len(graph_labels)+1)}
     index_graph={i:[] for i in range(1,len(graph_labels)+1)}
     num_edges = 0
     with open(filename_adj) as f:
@@ -86,7 +86,7 @@ def read_graphfile(datadir, dataname, max_nodes=None):
         G=nx.from_edgelist(adj_list[i])
         if max_nodes is not None and G.number_of_nodes() > max_nodes:
             continue
-      
+
         # add features and labels
         G.graph['label'] = graph_labels[i-1]
         for u in G.nodes():
@@ -111,7 +111,40 @@ def read_graphfile(datadir, dataname, max_nodes=None):
             for n in G.nodes:
                 mapping[n]=it
                 it+=1
-            
+
+        # indexed from 0
+        graphs.append(nx.relabel_nodes(G, mapping))
+    return graphs
+
+def read_mesh_file(datadir, dataname):
+    '''
+    Reads the train and validation file at data/mesh/Xtrn.npz
+    Returns:
+        List of networkx objects with graph and node labels
+    '''
+    train_file = os.path.join(datadir, dataname, 'Xtrn.npz')
+    train_np_file = np.load(train_file)
+    train_points  = train_np_file[train_np_file.files[0]]
+    graphs = []
+    for i in range(train_points.shape[0])[:50]:
+        xs = iter(train_points[i,:10,0,0])
+        ys = iter(train_points[i,:10,0,0])
+        zs = iter(train_points[i,:10,0,0])
+        G = nx.grid_graph(dim=[xs, ys, zs])
+        G.graph['label'] = 1
+
+        # relabeling
+        mapping={}
+        it=0
+        if float(nx.__version__)<2.0:
+            for n in G.nodes():
+                mapping[n]=it
+                it+=1
+        else:
+            for n in G.nodes:
+                mapping[n]=it
+                it+=1
+
         # indexed from 0
         graphs.append(nx.relabel_nodes(G, mapping))
     return graphs
