@@ -4,7 +4,7 @@ import scipy as sc
 import os
 import re
 import pickle
-from multiprocessing import Process
+import multiprocessing as mp
 
 def read_graphfile(datadir, dataname, max_nodes=None):
     ''' Read data from https://ls11-www.cs.tu-dortmund.de/staff/morris/graphkerneldatasets
@@ -120,6 +120,7 @@ def read_graphfile(datadir, dataname, max_nodes=None):
 
 
 def create_graph_from_points(points, index):
+    print("starting")
     xs = iter(points[index,:,0,0])
     ys = iter(points[index,:,0,1])
     zs = iter(points[index,:,0,2])
@@ -187,13 +188,11 @@ def create_mesh_pickle(datadir, dataname):
     print(total)
     chunk_size = int(total / num_threads)
     splits = chunks(train_points, chunk_size)
-    # jobs = []
+    pool = mp.Pool(num_threads)
     for i, s in enumerate(splits):
-        j = Process(target=handle_dataset_split, args=(splits[i], pickle_dir, "train", i, chunk_size))
-    #jobs.append(j)
-    # for j in jobs:
-        j.start()
-        j.join()
+        j = pool.apply_async(handle_dataset_split, args=(splits[i], pickle_dir, "train", i, chunk_size))
+    pool.close()
+    pool.join()
 
 
 def read_mesh_graph_pickle(datadir, dataname):
