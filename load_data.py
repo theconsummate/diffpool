@@ -4,6 +4,7 @@ import scipy as sc
 import os
 import re
 import pickle
+from multiprocessing import Process
 
 def read_graphfile(datadir, dataname, max_nodes=None):
     ''' Read data from https://ls11-www.cs.tu-dortmund.de/staff/morris/graphkerneldatasets
@@ -140,6 +141,11 @@ def create_graph_from_points(points, index):
     # indexed from 0
     return nx.relabel_nodes(G, mapping)
 
+
+def chunks(l, n):
+    return [l[i:i+n] for i in range(0, len(l), n)]
+
+
 def read_mesh_file(datadir, dataname):
     '''
     Reads the train and validation file at data/mesh/Xtrn.npz
@@ -155,6 +161,12 @@ def read_mesh_file(datadir, dataname):
     return graphs
 
 
+def handle_dataset_split(points, pickle_dir, dtype, partition_number, chunk_size):
+    for i in range(points.shape[0]):
+        pickle_file = open(os.path.join(pickle_dir, dtype + str(i + partition_number*chunk_size)+"_graph.pkl"), 'wb')
+        pickle.dump(create_graph_from_points(points, i), pickle_file, -1)
+        pickle_file.close()
+
 def create_mesh_pickle(datadir, dataname):
     '''
     Reads the train and validation file at data/mesh/Xtrn.npz
@@ -166,12 +178,22 @@ def create_mesh_pickle(datadir, dataname):
     train_file = os.path.join(local_dir_path, 'Xtrn.npz')
     train_np_file = np.load(train_file)
     train_points  = train_np_file[train_np_file.files[0]]
+    # train_points = train_points[:35]
     graphs = []
-    for i in range(train_points.shape[0]):
-        pickle_file = open(os.path.join(pickle_dir, "train" + str(i)+"_graph.pkl"), 'wb')
-        pickle.dump(create_graph_from_points(train_points, i), pickle_file, -1)
-        pickle_file.close()
-    # return graphs
+
+    total = len(train_points)
+    num_threads = 32
+    print("number of threads = ", num_threads)
+    print(total)
+    chunk_size = int(total / num_threads)
+    splits = chunks(train_points, chunk_size)
+    # jobs = []
+    for i, s in enumerate(splits):
+        j = Process(target=handle_dataset_split, args=(splits[i], pickle_dir, "train", i, chunk_size))
+    #jobs.append(j)
+    # for j in jobs:
+        j.start()
+        j.join()
 
 
 def read_mesh_graph_pickle(datadir, dataname):
@@ -189,5 +211,5 @@ def read_mesh_graph_pickle(datadir, dataname):
 
 if __name__ == "__main__":
     create_mesh_pickle("data", "mesh")
-    graphs = read_mesh_graph_pickle("data", "mesh")
-    print(graphs)
+    # graphs = read_mesh_graph_pickle("data", "mesh")
+    # print("number read:", len(graphs))
