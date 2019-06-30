@@ -5,6 +5,7 @@ import os
 import re
 import pickle
 import multiprocessing as mp
+import copy
 
 def read_graphfile(datadir, dataname, max_nodes=None):
     ''' Read data from https://ls11-www.cs.tu-dortmund.de/staff/morris/graphkerneldatasets
@@ -119,13 +120,19 @@ def read_graphfile(datadir, dataname, max_nodes=None):
     return graphs
 
 
-def create_graph_from_points(points, index):
+def add_graph_labels(G, points, index):
     print("starting")
-    xs = iter(points[index,:,0,0])
-    ys = iter(points[index,:,0,1])
-    zs = iter(points[index,:,0,2])
-    G = nx.grid_graph(dim=[xs, ys, zs])
-    G.graph['label'] = 1
+    for i in range(points.shape[1]):
+        # nodes in graph are 1-indexed
+        G.nodes[i + 1]['feat'] = points[index, i, 0, :]
+    # xs = iter(points[index,:,0,0])
+    # ys = iter(points[index,:,0,1])
+    # zs = iter(points[index,:,0,2])
+    # G = nx.grid_graph(dim=[xs, ys, zs])
+    G.graph['label'] = index
+    G.graph['feat_dim'] = points.shape[3]
+
+    print(G.nodes[1]['feat'])
 
     # relabeling
     mapping={}
@@ -147,6 +154,16 @@ def chunks(l, n):
     return [l[i:i+n] for i in range(0, len(l), n)]
 
 
+def create_graph_structure_from_edge_file(num_nodes, edges):
+    G = nx.Graph()
+    for i in range(1, num_nodes + 1):
+        # create nodes with ids 1,2...,num_nodes
+        G.add_node(i)
+    for i in range(edges.shape[1]):
+        # add edges between the nodes, the values in the edges object are 1-indexed.
+        G.add_edge(edges[0][i], edges[1,i])
+    return G
+
 def read_mesh_file(datadir, dataname):
     '''
     Reads the train and validation file at data/mesh/Xtrn.npz
@@ -154,11 +171,20 @@ def read_mesh_file(datadir, dataname):
         List of networkx objects with graph and node labels
     '''
     train_file = os.path.join(datadir, dataname, 'Xtrn.npz')
+    '''this edges file is constant and therefore it can be used to create
+    a graph structure once. Make copies of this graph object and set the
+    node features as the point coordinates for different input graphs.
+    '''
+    edge_file_path = os.path.join(datadir, dataname, 'Y_edges.npy')
     train_np_file = np.load(train_file)
+    edges = np.load(edge_file_path)
     train_points  = train_np_file[train_np_file.files[0]]
+    # create basic graph
+    basic_graph = create_graph_structure_from_edge_file(train_points.shape[1], edges)
+
     graphs = []
     for i in range(train_points.shape[0])[:50]:
-        graphs.append(create_graph_from_points(train_points, i))
+        graphs.append(add_graph_labels(copy.deepcopy(basic_graph), train_points, i))
     return graphs
 
 

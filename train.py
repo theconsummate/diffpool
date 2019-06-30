@@ -534,7 +534,7 @@ def benchmark_task_val(args, writer=None, feat='node-label'):
 
 
 
-def mesk_task(args, writer=None, feat=''):
+def mesk_task(args, writer=None, feat='node-feat'):
     graphs = load_data.read_mesh_file(args.datadir, args.bmname)
 
     if feat == 'node-feat' and 'feat_dim' in graphs[0].graph:
