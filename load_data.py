@@ -121,7 +121,7 @@ def read_graphfile(datadir, dataname, max_nodes=None):
 
 
 def add_graph_labels(G, points, index):
-    print("starting")
+    # print("starting")
     for i in range(points.shape[1]):
         # nodes in graph are 1-indexed
         G.nodes[i + 1]['feat'] = points[index, i, 0, :]
@@ -129,10 +129,10 @@ def add_graph_labels(G, points, index):
     # ys = iter(points[index,:,0,1])
     # zs = iter(points[index,:,0,2])
     # G = nx.grid_graph(dim=[xs, ys, zs])
-    G.graph['label'] = index
+    G.graph['label'] = np.int16(index)
     G.graph['feat_dim'] = points.shape[3]
 
-    print(G.nodes[1]['feat'])
+    # print(G.nodes[1]['feat'])
 
     # relabeling
     mapping={}
@@ -183,7 +183,7 @@ def read_mesh_file(datadir, dataname):
     basic_graph = create_graph_structure_from_edge_file(train_points.shape[1], edges)
 
     graphs = []
-    for i in range(train_points.shape[0])[:50]:
+    for i in range(train_points.shape[0])[:10]:
         graphs.append(add_graph_labels(copy.deepcopy(basic_graph), train_points, i))
     return graphs
 

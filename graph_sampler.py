@@ -35,7 +35,7 @@ class GraphSampler(torch.utils.data.Dataset):
         ff0, af0 = self.get_feat(0, self.features_mode, self.assign_feat_mode)
         self.assign_feat_dim = af0.shape[1]
 
-        print("init complete")
+        # print("init complete")
 
 
         # self.feat_dim = self.feature_all[0].shape[1]
@@ -115,7 +115,7 @@ class GraphSampler(torch.utils.data.Dataset):
         adj_padded[:num_nodes, :num_nodes] = adj
 
         feat_idx, assign_feat_idx = self.get_feat(idx, self.features_mode, self.assign_feat_mode)
-        print("got item")
+        # print("got item")
 
         # use all nodes for aggregation (baseline)
 

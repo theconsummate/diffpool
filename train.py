@@ -43,10 +43,9 @@ def evaluate(dataset, model, args, name='Validation', max_num_examples=None):
 
         ypred = model(h0, adj, batch_num_nodes, assign_x=assign_input)
         _, indices = torch.max(ypred, 1)
-        preds.append(indices.cpu().data.numpy())
 
         if max_num_examples is not None:
-            if (batch_idx+1)*args.batch_size > max_num_examples:
+            if (batch_idx+1)*args.batch_size >= max_num_examples:
                 break
 
     labels = np.hstack(labels)
@@ -173,7 +172,7 @@ def log_graph(adj, batch_num_nodes, writer, epoch, batch_idx, assign_tensor=None
 
 def train(dataset, model, args, same_feat=True, val_dataset=None, test_dataset=None, writer=None,
         mask_nodes = True):
-    writer_batch_idx = [0, 3, 6, 9]
+    writer_batch_idx = [0, 1]
 
     optimizer = torch.optim.Adam(filter(lambda p : p.requires_grad, model.parameters()), lr=0.001)
     iter = 0
@@ -200,6 +199,7 @@ def train(dataset, model, args, same_feat=True, val_dataset=None, test_dataset=N
         model.train()
         print('Epoch: ', epoch)
         for batch_idx, data in enumerate(dataset):
+            print('begin batch iter')
             begin_time = time.time()
             model.zero_grad()
             adj = Variable(data['adj'].float(), requires_grad=False).to(cfg.DEVICE)
@@ -228,10 +228,10 @@ def train(dataset, model, args, same_feat=True, val_dataset=None, test_dataset=N
             total_time += elapsed
 
             # log once per XX epochs
-            if epoch % 10 == 0 and batch_idx == len(dataset) // 2 and args.method == 'soft-assign' and writer is not None:
-                log_assignment(model.assign_tensor, writer, epoch, writer_batch_idx)
-                if args.log_graph:
-                    log_graph(adj, batch_num_nodes, writer, epoch, writer_batch_idx, model.assign_tensor)
+            # if epoch % 10 == 0 and batch_idx == len(dataset) // 2 and args.method == 'soft-assign' and writer is not None:
+            #     log_assignment(model.assign_tensor, writer, epoch, writer_batch_idx)
+            #     if args.log_graph:
+            #         log_graph(adj, batch_num_nodes, writer, epoch, writer_batch_idx, model.assign_tensor)
         avg_loss /= batch_idx + 1
         avg_main /= batch_idx + 1
         avg_link /= batch_idx + 1
@@ -240,7 +240,7 @@ def train(dataset, model, args, same_feat=True, val_dataset=None, test_dataset=N
             if args.linkpred:
                 writer.add_scalar('loss/linkpred_loss', model.link_loss, epoch)
         print('Avg loss: ', avg_loss, 'Main loss: ', avg_main, 'Link loss', avg_link, '; epoch time: ', total_time)
-        result = evaluate(dataset, model, args, name='Train', max_num_examples=100)
+        result = evaluate(dataset, model, args, name='Train', max_num_examples=4)
         train_accs.append(result['acc'])
         train_epochs.append(epoch)
         if val_dataset is not None:
