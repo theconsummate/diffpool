@@ -129,7 +129,7 @@ def add_graph_labels(G, points, index):
     # ys = iter(points[index,:,0,1])
     # zs = iter(points[index,:,0,2])
     # G = nx.grid_graph(dim=[xs, ys, zs])
-    G.graph['label'] = np.int16(index)
+    G.graph['label'] = np.int16(1)
     G.graph['feat_dim'] = points.shape[3]
 
     # print(G.nodes[1]['feat'])
