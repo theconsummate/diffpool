@@ -290,7 +290,7 @@ class SoftPoolingGcnEncoder(GcnEncoderGraph):
             self.assign_pred_modules.append(assign_pred)
 
         self.pred_models = [self.build_pred_layers(self.pred_input_dim * (num_pooling+1), pred_hidden_dims,
-                label_dim, num_aggs=self.num_aggs) for i in range(3)]
+                label_dim, num_aggs=self.num_aggs).to(cfg.DEVICE) for i in range(3)]
 
         for m in self.modules():
             if isinstance(m, GraphConv):
@@ -368,7 +368,7 @@ class SoftPoolingGcnEncoder(GcnEncoderGraph):
             output = out
         ypreds = [p(output) for p in self.pred_models]
         ypreds = torch.stack(ypreds, 2)
-        return ypred
+        return ypreds
 
     def loss(self, pred, label, adj=None, batch_num_nodes=None, adj_hop=1):
         '''
