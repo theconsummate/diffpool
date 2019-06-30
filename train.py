@@ -210,14 +210,16 @@ def train(dataset, model, args, same_feat=True, val_dataset=None, test_dataset=N
             assign_input = Variable(data['assign_feats'].float(), requires_grad=False).to(cfg.DEVICE)
 
             ypred = model(h0, adj, batch_num_nodes, assign_x=assign_input)
-            if not args.method == 'soft-assign' or not args.linkpred:
-                loss = model.loss(ypred, label)
-            else:
-                loss = model.loss(ypred, label, adj, batch_num_nodes)
-                linkloss = float(model.link_loss)
-                mainloss = float(loss) - linkloss
-                avg_main += mainloss
-                avg_link += linkloss
+            criterion = nn.MSELoss()
+            loss = criterion(ypred, h0)
+            # if not args.method == 'soft-assign' or not args.linkpred:
+            #     loss = model.loss(ypred, label)
+            # else:
+            #     loss = model.loss(ypred, label, adj, batch_num_nodes)
+            #     linkloss = float(model.link_loss)
+            #     mainloss = float(loss) - linkloss
+            #     avg_main += mainloss
+            #     avg_link += linkloss
             loss.backward()
             nn.utils.clip_grad_norm(model.parameters(), args.clip)
             optimizer.step()
