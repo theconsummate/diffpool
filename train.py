@@ -43,6 +43,7 @@ def evaluate(dataset, model, args, name='Validation', max_num_examples=None):
 
         ypred = model(h0, adj, batch_num_nodes, assign_x=assign_input)
         _, indices = torch.max(ypred, 1)
+        preds.append(indices.cpu().data.numpy())
 
         if max_num_examples is not None:
             if (batch_idx+1)*args.batch_size >= max_num_examples:
