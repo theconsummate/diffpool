@@ -183,7 +183,7 @@ def read_mesh_file(datadir, dataname):
     basic_graph = create_graph_structure_from_edge_file(train_points.shape[1], edges)
 
     graphs = []
-    for i in range(train_points.shape[0])[:10]:
+    for i in range(train_points.shape[0]):
         graphs.append(add_graph_labels(copy.deepcopy(basic_graph), train_points, i))
     return graphs
 

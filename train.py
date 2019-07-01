@@ -200,7 +200,6 @@ def train(dataset, model, args, same_feat=True, val_dataset=None, test_dataset=N
         model.train()
         print('Epoch: ', epoch)
         for batch_idx, data in enumerate(dataset):
-            print('begin batch iter')
             begin_time = time.time()
             model.zero_grad()
             adj = Variable(data['adj'].float(), requires_grad=False).to(cfg.DEVICE)
@@ -243,6 +242,9 @@ def train(dataset, model, args, same_feat=True, val_dataset=None, test_dataset=N
             if args.linkpred:
                 writer.add_scalar('loss/linkpred_loss', model.link_loss, epoch)
         print('Avg loss: ', avg_loss, 'Main loss: ', avg_main, 'Link loss', avg_link, '; epoch time: ', total_time)
+        if epoch % 10 == 0:
+            torch.save(model, os.path.join(writer.logdir, "model.ep" + str(epoch)))
+        '''
         result = evaluate(dataset, model, args, name='Train', max_num_examples=4)
         train_accs.append(result['acc'])
         train_epochs.append(epoch)
@@ -271,6 +273,7 @@ def train(dataset, model, args, same_feat=True, val_dataset=None, test_dataset=N
             test_epochs.append(test_result['epoch'])
             test_accs.append(test_result['acc'])
 
+
     matplotlib.style.use('seaborn')
     plt.switch_backend('agg')
     plt.figure()
@@ -284,7 +287,7 @@ def train(dataset, model, args, same_feat=True, val_dataset=None, test_dataset=N
     plt.savefig(gen_train_plt_name(args), dpi=600)
     plt.close()
     matplotlib.style.use('default')
-
+    '''
     return model, val_accs
 
 def prepare_data(graphs, args, test_graphs=None, max_nodes=0):
@@ -575,9 +578,10 @@ def mesk_task(args, writer=None, feat='node-feat'):
                 input_dim, args.hidden_dim, args.output_dim, args.num_classes,
                 args.num_gc_layers, bn=args.bn, dropout=args.dropout, args=args).to(cfg.DEVICE)
 
-    train(train_dataset, model, args, val_dataset=val_dataset, test_dataset=test_dataset,
+    trained_model = train(train_dataset, model, args, val_dataset=val_dataset, test_dataset=test_dataset,
             writer=writer)
-    evaluate(test_dataset, model, args, 'Validation')
+    torch.save(trained_model, os.path.join(writer.logdir, "model.final"))
+    #evaluate(test_dataset, model, args, 'Validation')
 
 
 def arg_parse():
@@ -695,6 +699,7 @@ def main():
         cfg.DEVICE = 'cpu'
 
     print('Device', cfg.DEVICE)
+    print('log dir: ', writer.logdir)
 
     if prog_args.bmname is not None:
         # benchmark_task_val(prog_args, writer=writer)
