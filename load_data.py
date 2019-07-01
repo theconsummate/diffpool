@@ -124,13 +124,14 @@ def add_graph_labels(G, points, index):
     # print("starting")
     for i in range(points.shape[1]):
         # nodes in graph are 1-indexed
-        G.nodes[i + 1]['feat'] = points[index, i, 0, :]
+        G.nodes[i + 1]['feat'] = points[index, i, :]
     # xs = iter(points[index,:,0,0])
     # ys = iter(points[index,:,0,1])
     # zs = iter(points[index,:,0,2])
     # G = nx.grid_graph(dim=[xs, ys, zs])
     G.graph['label'] = np.int16(1)
-    G.graph['feat_dim'] = points.shape[3]
+    # choose the last dimension
+    G.graph['feat_dim'] = points.shape[-1]
 
     # print(G.nodes[1]['feat'])
 
@@ -170,7 +171,7 @@ def read_mesh_file(datadir, dataname):
     Returns:
         List of networkx objects with graph and node labels
     '''
-    train_file = os.path.join(datadir, dataname, 'Xtrn.npz')
+    train_file = os.path.join(datadir, dataname, 'Ytrn.npz')
     '''this edges file is constant and therefore it can be used to create
     a graph structure once. Make copies of this graph object and set the
     node features as the point coordinates for different input graphs.
@@ -179,6 +180,7 @@ def read_mesh_file(datadir, dataname):
     train_np_file = np.load(train_file)
     edges = np.load(edge_file_path)
     train_points  = train_np_file[train_np_file.files[0]]
+    print(train_points.shape)
     # create basic graph
     basic_graph = create_graph_structure_from_edge_file(train_points.shape[1], edges)
 
@@ -202,7 +204,7 @@ def create_mesh_pickle(datadir, dataname):
     local_dir_path = os.path.join(datadir, dataname)
     pickle_dir = os.path.join(local_dir_path, "pickles", "train")
     os.system('mkdir -p ' + pickle_dir)
-    train_file = os.path.join(local_dir_path, 'Xtrn.npz')
+    train_file = os.path.join(local_dir_path, 'Ytrn.npz')
     train_np_file = np.load(train_file)
     train_points  = train_np_file[train_np_file.files[0]]
     # train_points = train_points[:35]

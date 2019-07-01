@@ -242,7 +242,7 @@ def train(dataset, model, args, same_feat=True, val_dataset=None, test_dataset=N
             if args.linkpred:
                 writer.add_scalar('loss/linkpred_loss', model.link_loss, epoch)
         print('Avg loss: ', avg_loss, 'Main loss: ', avg_main, 'Link loss', avg_link, '; epoch time: ', total_time)
-        if epoch % 10 == 0:
+        if epoch % 1 == 0:
             torch.save(model, os.path.join(writer.logdir, "model.ep" + str(epoch)))
         '''
         result = evaluate(dataset, model, args, name='Train', max_num_examples=4)
