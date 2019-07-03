@@ -26,6 +26,7 @@ import gen.data as datagen
 from graph_sampler import GraphSampler
 import load_data
 import util
+from chamfer_loss import ChamferLoss
 
 import cfg
 
@@ -209,7 +210,7 @@ def train(dataset, model, args, same_feat=True, val_dataset=None, test_dataset=N
             assign_input = Variable(data['assign_feats'].float(), requires_grad=False).to(cfg.DEVICE)
 
             ypred = model(h0, adj, batch_num_nodes, assign_x=assign_input)
-            criterion = nn.MSELoss()
+            criterion = ChamferLoss()
             loss = criterion(ypred, h0)
             # if not args.method == 'soft-assign' or not args.linkpred:
             #     loss = model.loss(ypred, label)
