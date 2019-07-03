@@ -5,6 +5,19 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 import faiss
 import cfg
+import numpy as np
+
+def robust_norm(var):
+    '''
+    :param var: Variable of BxCxHxW
+    :return: p-norm of BxCxW
+    '''
+    result = ((var**2).sum(dim=2) + 1e-8).sqrt()
+    # result = (var ** 2).sum(dim=2)
+
+    # try to make the points less dense, caused by the backward loss
+    # result = result.clamp(min=7e-3, max=None)
+    return result
 
 class ChamferLoss(nn.Module):
     def __init__(self):
@@ -14,10 +27,10 @@ class ChamferLoss(nn.Module):
         self.k = 1
 
         # we need only a StandardGpuResources per GPU
-        self.res = faiss.StandardGpuResources()
-        self.res.setTempMemoryFraction(0.1)
-        self.flat_config = faiss.GpuIndexFlatConfig()
-        self.flat_config.device = cfg.gpu_id
+        # self.res = faiss.StandardGpuResources()
+        # self.res.setTempMemoryFraction(0.1)
+        # self.flat_config = faiss.GpuIndexFlatConfig()
+        # self.flat_config.device = cfg.gpu_id
 
         # place holder
         self.forward_loss = torch.FloatTensor([0])
@@ -29,8 +42,8 @@ class ChamferLoss(nn.Module):
         :return: Faiss index, in CPU
         '''
         # index = faiss.GpuIndexFlatL2(self.res, self.dimension, self.flat_config)  # dimension is 3
-        index_cpu = faiss.IndexFlatL2(self.dimension)
-        index = faiss.index_cpu_to_gpu(self.res, cfg.gpu_id, index_cpu)
+        index = faiss.IndexFlatL2(self.dimension)
+        # index = faiss.index_cpu_to_gpu(self.res, cfg.gpu_id, index_cpu)
         index.add(database)
         return index
 
