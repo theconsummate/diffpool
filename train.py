@@ -210,8 +210,9 @@ def train(dataset, model, args, same_feat=True, val_dataset=None, test_dataset=N
             assign_input = Variable(data['assign_feats'].float(), requires_grad=False).to(cfg.DEVICE)
 
             ypred = model(h0, adj, batch_num_nodes, assign_x=assign_input)
+        #     criterion = nn.MSELoss()
             criterion = ChamferLoss()
-            loss = criterion(ypred, h0)
+            loss = criterion(ypred.permute(0, 2, 1), h0.permute(0, 2, 1))
             # if not args.method == 'soft-assign' or not args.linkpred:
             #     loss = model.loss(ypred, label)
             # else:
