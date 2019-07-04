@@ -584,7 +584,7 @@ def mesk_task(args, writer=None, feat='node-feat'):
     # args.resume is not empty, load the model from the given path
     if args.resume:
         print('loading model from ' + args.resume)
-        model - torch.load(args.resume)
+        model = torch.load(args.resume)
 
     trained_model = train(train_dataset, model, args, val_dataset=val_dataset, test_dataset=test_dataset,
             writer=writer)
