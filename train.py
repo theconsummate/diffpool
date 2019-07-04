@@ -561,7 +561,11 @@ def mesk_task(args, writer=None, feat='node-feat'):
 
     train_dataset, val_dataset, test_dataset, max_num_nodes, input_dim, assign_input_dim = \
             prepare_data(graphs, args)
-    if args.method == 'soft-assign':
+
+    # args.resume is not empty, load the model from the given path
+    if not args.resume:
+        model - torch.load(args.resume)
+    elif args.method == 'soft-assign':
         print('Method: soft-assign')
         model = encoders.SoftPoolingGcnEncoder(
                 max_num_nodes,
@@ -605,7 +609,8 @@ def arg_parse():
     parser.add_argument('--linkpred', dest='linkpred', action='store_const',
             const=True, default=False,
             help='Whether link prediction side objective is used')
-
+    parser.add_argument('--resume', dest='resume',
+            help='path to model_file from where training has to be resumed.')
 
     parser.add_argument('--datadir', dest='datadir',
             help='Directory where benchmark is located')
@@ -678,7 +683,8 @@ def arg_parse():
                         method='base',
                         name_suffix='',
                         assign_ratio=0.1,
-                        num_pool=1
+                        num_pool=1,
+                        resume=""
                        )
     return parser.parse_args()
 
