@@ -562,10 +562,7 @@ def mesk_task(args, writer=None, feat='node-feat'):
     train_dataset, val_dataset, test_dataset, max_num_nodes, input_dim, assign_input_dim = \
             prepare_data(graphs, args)
 
-    # args.resume is not empty, load the model from the given path
-    if not args.resume:
-        model - torch.load(args.resume)
-    elif args.method == 'soft-assign':
+    if args.method == 'soft-assign':
         print('Method: soft-assign')
         model = encoders.SoftPoolingGcnEncoder(
                 max_num_nodes,
@@ -583,6 +580,11 @@ def mesk_task(args, writer=None, feat='node-feat'):
         model = encoders.GcnEncoderGraph(
                 input_dim, args.hidden_dim, args.output_dim, args.num_classes,
                 args.num_gc_layers, bn=args.bn, dropout=args.dropout, args=args).to(cfg.DEVICE)
+
+    # args.resume is not empty, load the model from the given path
+    if args.resume:
+        print('loading model from ' + args.resume)
+        model - torch.load(args.resume)
 
     trained_model = train(train_dataset, model, args, val_dataset=val_dataset, test_dataset=test_dataset,
             writer=writer)
