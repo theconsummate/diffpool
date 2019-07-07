@@ -124,7 +124,10 @@ def add_graph_labels(G, points, index):
     # print("starting")
     for i in range(points.shape[1]):
         # nodes in graph are 1-indexed
-        G.nodes[i + 1]['feat'] = points[index, i, :]
+        # normalize the point coordinates
+        point = points[index, i, :]
+        norm_point = point / np.linalg.norm(point)
+        G.nodes[i + 1]['feat'] = norm_point
     # xs = iter(points[index,:,0,0])
     # ys = iter(points[index,:,0,1])
     # zs = iter(points[index,:,0,2])
