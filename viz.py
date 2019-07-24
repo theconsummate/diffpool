@@ -1,4 +1,6 @@
 import os
+import sys
+import pickle
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 
@@ -48,6 +50,17 @@ def read_mesh_input(datadir="data", dataname="mesh"):
     visualise3D(train_points.reshape(num_points, shape[2]), assignment)
     # print(train_points[:,:,])
 
+def plot_assignments(fpath):
+    f = open(fpath, 'rb')
+    x, assignment = pickle.load(f)
+    f.close()
+
+    shape = x.shape
+    print(shape)
+    print(assignment.shape)
+    num_points = shape[0] * shape[1]
+    visualise3D(x.reshape(num_points, shape[2]), assignment.reshape(num_points))
 
 if __name__ == "__main__":
-    read_mesh_input()
+    # read_mesh_input()
+    plot_assignments(sys.argv[1])

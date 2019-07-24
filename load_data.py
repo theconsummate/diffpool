@@ -122,12 +122,22 @@ def read_graphfile(datadir, dataname, max_nodes=None):
 
 def add_graph_labels(G, points, index):
     # print("starting")
+    max_norm = -1
     for i in range(points.shape[1]):
         # nodes in graph are 1-indexed
         # normalize the point coordinates
         point = points[index, i, :]
-        norm_point = point / np.linalg.norm(point)
+        this_norm = np.linalg.norm(point)
+        if this_norm > max_norm:
+            max_norm = this_norm
+    
+    for i in range(points.shape[1]):
+        # nodes in graph are 1-indexed
+        # normalize the point coordinates
+        point = points[index, i, :]
+        norm_point = point / max_norm
         G.nodes[i + 1]['feat'] = norm_point
+    
     # xs = iter(points[index,:,0,0])
     # ys = iter(points[index,:,0,1])
     # zs = iter(points[index,:,0,2])

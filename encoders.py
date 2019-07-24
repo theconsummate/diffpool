@@ -10,6 +10,7 @@ from set2set import Set2Set
 import cfg
 
 from chamfer_loss import ChamferLoss
+import pickle
 
 # GCN basic operation
 class GraphConv(nn.Module):
@@ -343,6 +344,12 @@ class SoftPoolingGcnEncoder(GcnEncoderGraph):
             self.assign_tensor = nn.Softmax(dim=-1)(self.assign_pred_modules[i](self.assign_tensor))
             if embedding_mask is not None:
                 self.assign_tensor = self.assign_tensor * embedding_mask
+
+            """_ , indices = torch.max(self.assign_tensor, 2)
+            fpickle = open('pickles/x.pkl', 'wb')
+            pickle.dump([x.cpu(), indices.cpu()], fpickle)
+            fpickle.close()
+            print("saved ...")"""
 
             # update pooled features and adj matrix
             x = torch.matmul(torch.transpose(self.assign_tensor, 1, 2), embedding_tensor)
