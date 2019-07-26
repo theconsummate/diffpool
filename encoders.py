@@ -68,8 +68,8 @@ class GcnEncoderGraph(nn.Module):
             self.pred_input_dim = hidden_dim * (num_layers - 1) + embedding_dim
         else:
             self.pred_input_dim = embedding_dim
-        self.pred_model = self.build_pred_layers(self.pred_input_dim, pred_hidden_dims,
-                label_dim, num_aggs=self.num_aggs)
+        self.pred_model = [self.build_pred_layers(self.pred_input_dim, pred_hidden_dims,
+                label_dim, num_aggs=self.num_aggs) for i in range(3)]
 
         for m in self.modules():
             if isinstance(m, GraphConv):
@@ -188,7 +188,8 @@ class GcnEncoderGraph(nn.Module):
             output = torch.cat(out_all, dim=1)
         else:
             output = out
-        ypred = self.pred_model(output)
+        ypred = [p(output) for p in self.pred_model]
+        ypred = torch.stack(ypred, 2)
         #print(output.size())
         return ypred
 
